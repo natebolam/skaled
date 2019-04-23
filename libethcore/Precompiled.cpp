@@ -34,6 +34,7 @@
 #include <libethcore/Common.h>
 #include <boost/algorithm/hex.hpp>
 #include <mutex>
+#include <curl/curl.h>
 
 using namespace std;
 using namespace dev;
@@ -463,6 +464,49 @@ ETH_REGISTER_PRECOMPILED( checkFile )( bytesConstRef _in ) {
         LOG( getLogger( VerbosityError ) ) << "Exception in checkFile: " << strError << "\n";
     } catch ( ... ) {
         LOG( getLogger( VerbosityError ) ) << "Unknown exception in checkFile\n";
+    }
+    u256 code = 0;
+    bytes response = toBigEndian( code );
+    return {false, response};
+}
+
+// TODO: get ip from config
+void sendRequest( const string& in, const string& out ) {
+    CURL* curl;
+    CURLcode res;
+    curl_global_init( CURL_GLOBAL_ALL );
+    curl = curl_easy_init();
+    if ( curl ) {
+        const string url = "http://127.0.0.1:5000/predict?in=" + in + "&out=" + out;
+        curl_easy_setopt( curl, CURLOPT_URL, url.c_str() );
+        res = curl_easy_perform( curl );
+        if ( res != CURLE_OK )
+            fprintf( stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror( res ) );
+        curl_easy_cleanup( curl );
+    }
+    curl_global_cleanup();
+}
+
+// TODO: check file existance
+ETH_REGISTER_PRECOMPILED( predict )( bytesConstRef _in ) {
+    try {
+        size_t filenameInLength, filenameOutLength;
+        std::string filenameIn, filenameOut;
+        convertBytesToString( _in, 0, filenameIn, filenameInLength );
+        size_t const filenameInBlocksCount = ( filenameInLength + 31 ) / 32;
+        size_t const pointer = ( filenameInBlocksCount + 1 ) * 32;
+        convertBytesToString( _in, pointer, filenameOut, filenameOutLength );
+        sendRequest( filenameIn, filenameOut );
+        u256 code = 1;
+        bytes response = toBigEndian( code );
+        return {true, response};
+    } catch ( std::exception& ex ) {
+        std::string strError = ex.what();
+        if ( strError.empty() )
+            strError = "exception without description";
+        std::cerr << "Exception in predict: " << strError << "\n";
+    } catch ( ... ) {
+        std::cerr << "Unknown exception in predict\n";
     }
     u256 code = 0;
     bytes response = toBigEndian( code );
