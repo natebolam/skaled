@@ -492,14 +492,16 @@ void sendRequest(
 // TODO: check file existance
 ETH_REGISTER_PRECOMPILED( predict )( bytesConstRef _in ) {
     try {
-        size_t filenameInLength, filenameOutLength, modelNameLength;
-        std::string filenameIn, filenameOut, modelName;
+        size_t filenameInLength, filenameOutLength, modelNameLength, predictorNameLength;
+        std::string filenameIn, filenameOut, modelName, predictorName;
         convertBytesToString( _in, 0, filenameIn, filenameInLength );
         size_t pointer = ( ( filenameInLength + 31 ) / 32 + 1 ) * 32;
         convertBytesToString( _in, pointer, filenameOut, filenameOutLength );
         pointer += (( filenameOutLength + 31 ) / 32 + 1 ) * 32;
         convertBytesToString( _in, pointer, modelName, modelNameLength );
-        sendRequest( filenameIn, filenameOut, modelName, "/tmp/pre.py" );
+        pointer += (( modelNameLength + 31 ) / 32 + 1 ) * 32;
+        convertBytesToString( _in, pointer, predictorName, predictorNameLength );
+        sendRequest( filenameIn, filenameOut, modelName, predictorName );
         u256 code = 1;
         bytes response = toBigEndian( code );
         return {true, response};
