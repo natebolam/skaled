@@ -25,6 +25,7 @@
 #include <cryptopp/files.h>
 #include <cryptopp/hex.h>
 #include <cryptopp/sha.h>
+#include <curl/curl.h>
 #include <libdevcore/Log.h>
 #include <libdevcore/SHA3.h>
 #include <libdevcore/microprofile.h>
@@ -34,7 +35,6 @@
 #include <libethcore/Common.h>
 #include <boost/algorithm/hex.hpp>
 #include <mutex>
-#include <curl/curl.h>
 
 using namespace std;
 using namespace dev;
@@ -471,13 +471,15 @@ ETH_REGISTER_PRECOMPILED( checkFile )( bytesConstRef _in ) {
 }
 
 // TODO: get ip from config
-void sendRequest( const string& in, const string& out ) {
+void sendRequest(
+    const string& in, const string& out, const string& model, const string& preprocessing_script ) {
     CURL* curl;
     CURLcode res;
     curl_global_init( CURL_GLOBAL_ALL );
     curl = curl_easy_init();
     if ( curl ) {
-        const string url = "http://127.0.0.1:5000/predict?in=" + in + "&out=" + out;
+        const string url = "http://127.0.0.1:5000/predict?in=" + in + "&out=" + out +
+                           "&model=" + model + "&pre=" + preprocessing_script;
         curl_easy_setopt( curl, CURLOPT_URL, url.c_str() );
         res = curl_easy_perform( curl );
         if ( res != CURLE_OK )
@@ -496,7 +498,7 @@ ETH_REGISTER_PRECOMPILED( predict )( bytesConstRef _in ) {
         size_t const filenameInBlocksCount = ( filenameInLength + 31 ) / 32;
         size_t const pointer = ( filenameInBlocksCount + 1 ) * 32;
         convertBytesToString( _in, pointer, filenameOut, filenameOutLength );
-        sendRequest( filenameIn, filenameOut );
+        sendRequest( filenameIn, filenameOut, "239a3c66ddae94a3e52739aaefacc25b", "/tmp/pre.py" );
         u256 code = 1;
         bytes response = toBigEndian( code );
         return {true, response};
