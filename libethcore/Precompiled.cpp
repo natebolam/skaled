@@ -489,7 +489,6 @@ void sendRequest(
     curl_global_cleanup();
 }
 
-// TODO: check file existance
 ETH_REGISTER_PRECOMPILED( predict )( bytesConstRef _in ) {
     try {
         size_t filenameInLength, filenameOutLength, modelNameLength, predictorNameLength;
@@ -497,9 +496,9 @@ ETH_REGISTER_PRECOMPILED( predict )( bytesConstRef _in ) {
         convertBytesToString( _in, 0, filenameIn, filenameInLength );
         size_t pointer = ( ( filenameInLength + 31 ) / 32 + 1 ) * 32;
         convertBytesToString( _in, pointer, filenameOut, filenameOutLength );
-        pointer += (( filenameOutLength + 31 ) / 32 + 1 ) * 32;
+        pointer += ( ( filenameOutLength + 31 ) / 32 + 1 ) * 32;
         convertBytesToString( _in, pointer, modelName, modelNameLength );
-        pointer += (( modelNameLength + 31 ) / 32 + 1 ) * 32;
+        pointer += ( ( modelNameLength + 31 ) / 32 + 1 ) * 32;
         convertBytesToString( _in, pointer, predictorName, predictorNameLength );
         sendRequest( filenameIn, filenameOut, modelName, predictorName );
         u256 code = 1;
