@@ -112,7 +112,7 @@ TransactionBase::TransactionBase(
             else
                 cwarn << _e.what();
         }
-    } catch ( ... ) {
+    } catch ( const std::exception& ex ) {
         m_type = Type::Invalid;
         RLPStream s;
         s.append( _rlpData.toBytes() );  // add "string" header
@@ -120,6 +120,8 @@ TransactionBase::TransactionBase(
 
         if ( !_allowInvalid )
             throw;
+        else
+            cwarn << ex.what() << ": " << toHex( _rlpData );
     }
 }  // ctor
 

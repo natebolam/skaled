@@ -236,7 +236,7 @@ void SkaleHost::createBlock( const ConsensusExtFace::transactions_vector& _appro
     for ( auto it = _approvedTransactions.begin(); it != _approvedTransactions.end(); ++it ) {
         const bytes& data = *it;
         h256 sha = sha3( data );
-        LOG( m_traceLogger ) << "Arrived txn: " << sha << std::endl;
+        LOG( m_traceLogger ) << "Arrived txn: " << sha << " size = " << data.size();
 
 #ifdef DEBUG_TX_BALANCE
         if ( sent.count( sha ) != m_transaction_cache.count( sha.asArray() ) ) {
@@ -266,7 +266,8 @@ void SkaleHost::createBlock( const ConsensusExtFace::transactions_vector& _appro
             Transaction t( data, CheckTransaction::Everything, true );
             t.checkOutExternalGas( m_client.chainParams().externalGasDifficulty );
             out_txns.push_back( t );
-            LOG( m_debugLogger ) << "Will import consensus-born txn!";
+            LOG( m_debugLogger ) << "Will import consensus-born txn: " << t.sha3();
+
             have_consensus_born = true;
         }  // else
 
