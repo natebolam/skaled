@@ -306,8 +306,8 @@ json_spirit::mObject fillBCTest( json_spirit::mObject const& _input ) {
             block.addUncle( uncle );
         }
 
-        vector< TestBlock > validUncles = blockchain.syncUncles( block.uncles() );
-        block.setUncles( validUncles );
+        //        vector< TestBlock > validUncles = blockchain.syncUncles( block.uncles() );
+        //        block.setUncles( validUncles );
 
         if ( blObjInput.count( "blockHeaderPremine" ) )
             overwriteBlockHeaderForTest(
