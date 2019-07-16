@@ -47,7 +47,6 @@ public:
     bool mineBlocks( unsigned _count ) noexcept;
     void modifyTimestamp( int64_t _timestamp );
     void rewindToBlock( unsigned _number );
-    h256 importRawBlock( std::string const& _blockRLP );
 
 protected:
     unsigned const m_singleBlockMaxMiningTimeInSeconds = 5;

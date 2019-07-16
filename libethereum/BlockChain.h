@@ -41,7 +41,6 @@
 
 #include "Account.h"
 #include "BlockDetails.h"
-#include "BlockQueue.h"
 #include "ChainParams.h"
 #include "LastBlockHashesFace.h"
 #include "Transaction.h"
@@ -129,12 +128,6 @@ public:
     /// (Potentially) renders invalid existing bytesConstRef returned by lastBlock.
     /// To be called from main loop every 100ms or so.
     void process();
-
-    /// Sync the chain with any incoming blocks. All blocks should, if processed in order.
-    /// @returns fresh blocks, dead blocks and true iff there are additional blocks to be processed
-    /// waiting. last - tx count
-    std::tuple< ImportRoute, bool, unsigned > sync(
-        BlockQueue& _bq, skale::State& _state, unsigned _max );
 
     /// Attempt to import the given block directly into the BlockChain and sync with the state DB.
     /// @returns the block hashes of any blocks that came into/went out of the canonical block

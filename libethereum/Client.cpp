@@ -105,7 +105,6 @@ Client::~Client() {
     stopWorking();
 
     m_tq.HandleDestruction();  // l_sergiy: destroy transaction queue earlier
-    m_bq.stop();               // l_sergiy: added to stop block queue processing
 
     terminate();
 }
@@ -141,17 +140,11 @@ void Client::init( fs::path const& _dbPath, fs::path const& _snapshotDownloadPat
     m_preSeal = bc().genesisBlock( m_state );
     m_postSeal = m_preSeal;
 
-    m_bq.setChain( bc() );
-
     m_lastGetWork = std::chrono::system_clock::now() - chrono::seconds( 30 );
     m_tqReady = m_tq.onReady( [=]() {
         this->onTransactionQueueReady();
     } );  // TODO: should read m_tq->onReady(thisThread, syncTransactionQueue);
     m_tqReplaced = m_tq.onReplaced( [=]( h256 const& ) { m_needStateReset = true; } );
-    m_bqReady = m_bq.onReady( [=]() {
-        this->onBlockQueueReady();
-    } );  // TODO: should read m_bq->onReady(thisThread, syncBlockQueue);
-    m_bq.setOnBad( [=]( Exception& ex ) { this->onBadBlock( ex ); } );
     bc().setOnBad( [=]( Exception& ex ) { this->onBadBlock( ex ); } );
     bc().setOnBlockImport( [=]( BlockHeader const& _info ) {
         if ( m_skaleHost )
@@ -189,19 +182,6 @@ void Client::init( fs::path const& _dbPath, fs::path const& _snapshotDownloadPat
     if ( _dbPath.size() )
         Defaults::setDBPath( _dbPath );
     doWork( false );
-}
-
-ImportResult Client::queueBlock( bytes const& _block, bool _isSafe ) {
-    if ( m_bq.status().verified + m_bq.status().verifying + m_bq.status().unverified > 10000 ) {
-        MICROPROFILE_SCOPEI( "Client", "queueBlock sleep 500", MP_DIMGRAY );
-        this_thread::sleep_for( std::chrono::milliseconds( 500 ) );
-    }
-    return m_bq.import( &_block, _isSafe );
-}
-
-tuple< ImportRoute, bool, unsigned > Client::syncQueue( unsigned _max ) {
-    stopWorking();
-    return bc().sync( m_bq, m_state, _max );
 }
 
 void Client::onBadBlock( Exception& _ex ) const {
@@ -296,7 +276,6 @@ void Client::reopenChain( ChainParams const& _p, WithExisting _we ) {
     stopWorking();
 
     m_tq.clear();
-    m_bq.clear();
     sealEngine()->cancelGeneration();
 
     {
@@ -399,34 +378,10 @@ unsigned static const c_syncMin = 1;
 unsigned static const c_syncMax = 1000;
 double static const c_targetDuration = 1;
 
-void Client::syncBlockQueue() {
-    //  cdebug << "syncBlockQueue()";
-
-    ImportRoute ir;
-    unsigned count;
-    Timer t;
-    tie( ir, m_syncBlockQueue, count ) = bc().sync( m_bq, m_state, m_syncAmount );
-    double elapsed = t.elapsed();
-
-    if ( count ) {
-        LOG( m_logger ) << count << " blocks imported in " << unsigned( elapsed * 1000 ) << " ms ("
-                        << ( count / elapsed ) << " blocks/s) in #" << bc().number();
-    }
-
-    if ( elapsed > c_targetDuration * 1.1 && count > c_syncMin )
-        m_syncAmount = max( c_syncMin, count * 9 / 10 );
-    else if ( count == m_syncAmount && elapsed < c_targetDuration * 0.9 &&
-              m_syncAmount < c_syncMax )
-        m_syncAmount = min( c_syncMax, m_syncAmount * 11 / 10 + 1 );
-    if ( ir.liveBlocks.empty() )
-        return;
-    onChainChanged( ir );
-}
-
 size_t Client::importTransactionsAsBlock( const Transactions& _transactions, uint64_t _timestamp ) {
     DEV_GUARDED( m_blockImportMutex ) {
         size_t n_succeeded = syncTransactions( _transactions, _timestamp );
-        sealUnconditionally( false );
+        sealUnconditionally();
         importWorkingBlock();
         return n_succeeded;
     }
@@ -627,10 +582,10 @@ void Client::rejigSealing() {
                 sealEngine()->onSealGenerated( [=]( bytes const& _header ) {
                     LOG( m_logger )
                         << "Block sealed #" << BlockHeader( _header, HeaderData ).number();
-                    if ( this->submitSealed( _header ) )
-                        m_onBlockSealed( _header );
-                    else
-                        LOG( m_logger ) << "Submitting block failed...";
+                    //                    if ( this->submitSealed( _header ) )
+                    //                        m_onBlockSealed( _header );
+                    //                    else
+                    //                        LOG( m_logger ) << "Submitting block failed...";
                 } );
                 ctrace << "Generating seal on " << m_sealingInfo.hash( WithoutSeal ) << " #"
                        << m_sealingInfo.number();
@@ -643,7 +598,7 @@ void Client::rejigSealing() {
         sealEngine()->cancelGeneration();
 }
 
-void Client::sealUnconditionally( bool submitToBlockChain ) {
+void Client::sealUnconditionally() {
     m_wouldButShouldnot = false;
 
     LOG( m_loggerDetail ) << "Rejigging seal engine...";
@@ -668,24 +623,17 @@ void Client::sealUnconditionally( bool submitToBlockChain ) {
     m_sealingInfo.streamRLP( headerRlp );
     const bytes& header = headerRlp.out();
     LOG( m_logger ) << "Block sealed #" << BlockHeader( header, HeaderData ).number();
-    if ( submitToBlockChain ) {
-        if ( this->submitSealed( header ) )
+    UpgradableGuard l( x_working );
+    {
+        UpgradeGuard l2( l );
+        if ( m_working.sealBlock( header ) ) {
             m_onBlockSealed( header );
-        else
-            LOG( m_logger ) << "Submitting block failed...";
-    } else {
-        UpgradableGuard l( x_working );
-        {
-            UpgradeGuard l2( l );
-            if ( m_working.sealBlock( header ) ) {
-                m_onBlockSealed( header );
-            } else {
-                LOG( m_logger ) << "Sealing block failed...";
-            }
+        } else {
+            LOG( m_logger ) << "Sealing block failed...";
         }
-        DEV_WRITE_GUARDED( x_postSeal )
-        m_postSeal = m_working;
     }
+    DEV_WRITE_GUARDED( x_postSeal )
+    m_postSeal = m_working;
 }
 
 void Client::importWorkingBlock() {
@@ -724,8 +672,6 @@ void Client::noteChanged( h256Hash const& _filters ) {
 
 void Client::doWork( bool _doWait ) {
     bool t = true;
-    if ( m_syncBlockQueue.compare_exchange_strong( t, false ) )
-        syncBlockQueue();
 
     if ( m_needStateReset ) {
         resetState();
@@ -751,7 +697,7 @@ void Client::doWork( bool _doWait ) {
     isSealed = m_working.isSealed();
     // If the block is sealed, we have to wait for it to tickle through the block queue
     // (which only signals as wanting to be synced if it is ready).
-    if ( !m_syncBlockQueue && ( _doWait || isSealed ) && isWorking() ) {
+    if ( ( _doWait || isSealed ) && isWorking() ) {
         MICROPROFILE_SCOPEI( "Client", "m_signalled.wait_for", MP_DIMGRAY );
         std::unique_lock< std::mutex > l( x_signalled );
         m_signalled.wait_for( l, chrono::seconds( 1 ) );
@@ -762,7 +708,6 @@ void Client::tick() {
     if ( chrono::system_clock::now() - m_lastTick > chrono::seconds( 1 ) ) {
         m_report.ticks++;
         checkWatchGarbage();
-        m_bq.tick();
         m_lastTick = chrono::system_clock::now();
         if ( m_report.ticks == 15 )
             LOG( m_loggerDetail ) << activityReport();
@@ -847,25 +792,6 @@ TransactionSkeleton Client::populateTransactionWithDefaults( TransactionSkeleton
         ret.gas = defaultTransactionGas;
 
     return ret;
-}
-
-bool Client::submitSealed( bytes const& _header ) {
-    bytes newBlock;
-    {
-        UpgradableGuard l( x_working );
-        {
-            UpgradeGuard l2( l );
-            if ( !m_working.sealBlock( _header ) )
-                return false;
-        }
-        DEV_WRITE_GUARDED( x_postSeal )
-        m_postSeal = m_working;
-        newBlock = m_working.blockData();
-    }
-
-    // OPTIMISE: very inefficient to not utilise the existing OverlayDB in m_postSeal that contains
-    // all trie changes.
-    return queueBlock( newBlock, true ) == ImportResult::Success;
 }
 
 h256 Client::submitTransaction( TransactionSkeleton const& _t, Secret const& _secret ) {

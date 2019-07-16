@@ -23,7 +23,6 @@
  */
 
 #include <libethereum/Block.h>
-#include <libethereum/BlockQueue.h>
 #include <test/tools/libtesteth/BlockChainHelper.h>
 #include <test/tools/libtesteth/JsonSpiritHeaders.h>
 #include <test/tools/libtesteth/TestHelper.h>

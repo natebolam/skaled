@@ -30,20 +30,6 @@ bool AdminEth::admin_eth_setMining( bool _on, string const& _session ) {
     return true;
 }
 
-Json::Value AdminEth::admin_eth_blockQueueStatus( string const& _session ) {
-    RPC_ADMIN;
-    Json::Value ret;
-    BlockQueueStatus bqs = m_eth.blockQueue().status();
-    ret["importing"] = ( int ) bqs.importing;
-    ret["verified"] = ( int ) bqs.verified;
-    ret["verifying"] = ( int ) bqs.verifying;
-    ret["unverified"] = ( int ) bqs.unverified;
-    ret["future"] = ( int ) bqs.future;
-    ret["unknown"] = ( int ) bqs.unknown;
-    ret["bad"] = ( int ) bqs.bad;
-    return ret;
-}
-
 bool AdminEth::admin_eth_setAskPrice( string const& _wei, string const& _session ) {
     RPC_ADMIN;
     m_gp.setAsk( jsToU256( _wei ) );
@@ -61,29 +47,7 @@ Json::Value AdminEth::admin_eth_findBlock( string const& _blockHash, string cons
     h256 h( _blockHash );
     if ( m_eth.blockChain().isKnown( h ) )
         return toJson( m_eth.blockChain().info( h ) );
-    switch ( m_eth.blockQueue().blockStatus( h ) ) {
-    case QueueStatus::Ready:
-        return "ready";
-    case QueueStatus::Importing:
-        return "importing";
-    case QueueStatus::UnknownParent:
-        return "unknown parent";
-    case QueueStatus::Bad:
-        return "bad";
-    default:
-        return "unknown";
-    }
-}
-
-string AdminEth::admin_eth_blockQueueFirstUnknown( string const& _session ) {
-    RPC_ADMIN;
-    return m_eth.blockQueue().firstUnknown().hex();
-}
-
-bool AdminEth::admin_eth_blockQueueRetryUnknown( string const& _session ) {
-    RPC_ADMIN;
-    m_eth.retryUnknown();
-    return true;
+    return "unknown";
 }
 
 Json::Value AdminEth::admin_eth_allAccounts( string const& _session ) {

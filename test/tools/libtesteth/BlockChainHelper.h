@@ -122,7 +122,6 @@ private:
     vector< TestBlock > m_uncles;
     std::unique_ptr< skale::State > m_state;
     TransactionQueue m_transactionQueue;
-    BlockQueue m_uncleQueue;
     dev::bytes m_bytes;
     std::unique_ptr< TransientDirectory > m_tempDirState;
     vector< TestTransaction > m_testTransactions;
@@ -140,7 +139,6 @@ public:
 
     void reset( TestBlock const& _genesisBlock );
     bool addBlock( TestBlock const& _block );
-    vector< TestBlock > syncUncles( vector< TestBlock > const& _uncles );
     TestBlock const& topBlock() { return m_lastBlock; }
     BlockChain const& getInterface() const { return *m_blockChain; }
     BlockChain& interfaceUnsafe() const { return *m_blockChain; }

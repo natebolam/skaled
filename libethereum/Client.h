@@ -110,9 +110,6 @@ public:
     /// Retrieve pending transactions
     Transactions pending() const override;
 
-    /// Queues a block for import.
-    ImportResult queueBlock( bytes const& _block, bool _isSafe = false );
-
     /// Get the remaining gas limit in this block.
     u256 gasLimitRemaining() const override { return m_postSeal.gasLimitRemaining(); }
     /// Get the gas bid price
@@ -129,24 +126,17 @@ public:
     }
     /// Get the object representing the current canonical blockchain.
     BlockChain const& blockChain() const { return bc(); }
-    /// Get some information on the block queue.
-    BlockQueueStatus blockQueueStatus() const { return m_bq.status(); }
     /// Get some information on the block syncing.
     SyncStatus syncStatus() const override;
     /// Populate the uninitialized fields in the supplied transaction with default values
     TransactionSkeleton populateTransactionWithDefaults(
         TransactionSkeleton const& _t ) const override;
-    /// Get the block queue.
-    BlockQueue const& blockQueue() const { return m_bq; }
     /// Get the state database.
     skale::State const& state() const { return m_state; }
     /// Get some information on the transaction queue.
     TransactionQueue::Status transactionQueueStatus() const { return m_tq.status(); }
     TransactionQueue::Limits transactionQueueLimits() const { return m_tq.limits(); }
     TransactionQueue* debugGetTransactionQueue() { return &m_tq; }
-
-    /// Freeze worker thread and sync some of the block queue.
-    std::tuple< ImportRoute, bool, unsigned > syncQueue( unsigned _max = 1 );
 
     // Sealing stuff:
     // Note: "mining"/"miner" is deprecated. Use "sealing"/"sealer".
@@ -211,8 +201,6 @@ public:
     /// Reloads the blockchain. Just for debug use.
     void reopenChain( ChainParams const& _p, WithExisting _we = WithExisting::Trust );
     void reopenChain( WithExisting _we );
-    /// Retries all blocks with unknown parents.
-    void retryUnknown() { m_bq.retryAllUnknown(); }
     /// Get a report of activity.
     ActivityReport activityReport() {
         ActivityReport ret;
@@ -269,7 +257,7 @@ protected:
 
     /// As rejigSealing - but stub
     /// thread unsafe!!
-    void sealUnconditionally( bool submitToBlockChain = true );
+    void sealUnconditionally();
 
     /// thread unsafe!!
     void importWorkingBlock();
@@ -308,9 +296,6 @@ protected:
     /// This doesn't actually make any callbacks, but incrememnts some counters in m_watches.
     void noteChanged( h256Hash const& _filters );
 
-    /// Submit
-    virtual bool submitSealed( bytes const& _s );
-
 protected:
     /// Called when Worker is starting.
     void startedWorking() override;
@@ -343,18 +328,9 @@ protected:
     /// Called by either submitWork() or in our main thread through syncBlockQueue().
     void onChainChanged( ImportRoute const& _ir );
 
-    /// Signal handler for when the block queue needs processing.
-    void syncBlockQueue();
-
     /// Magically called when m_tq needs syncing. Be nice and don't block.
     void onTransactionQueueReady() {
         m_syncTransactionQueue = true;
-        m_signalled.notify_all();
-    }
-
-    /// Magically called when m_bq needs syncing. Be nice and don't block.
-    void onBlockQueueReady() {
-        m_syncBlockQueue = true;
         m_signalled.notify_all();
     }
 
@@ -375,9 +351,7 @@ protected:
     /// Executes the pending functions in m_functionQueue
     void callQueuedFunctions();
 
-    BlockChain m_bc;  ///< Maintains block database and owns the seal engine.
-    BlockQueue m_bq;  ///< Maintains a list of incoming blocks not yet on the blockchain (to be
-                      ///< imported).
+    BlockChain m_bc;        ///< Maintains block database and owns the seal engine.
     TransactionQueue m_tq;  ///< Maintains a list of incoming transactions not yet in a block on the
                             ///< blockchain.
 
@@ -412,7 +386,6 @@ protected:
 
     Handler<> m_tqReady;
     Handler< h256 const& > m_tqReplaced;
-    Handler<> m_bqReady;
 
     bool m_wouldSeal = false;          ///< True if we /should/ be sealing.
     bool m_wouldButShouldnot = false;  ///< True if the last time we called rejigSealing wouldSeal()
@@ -432,7 +405,6 @@ protected:
                                                             ///< the main thread.
 
     std::atomic< bool > m_syncTransactionQueue = {false};
-    std::atomic< bool > m_syncBlockQueue = {false};
 
     bytes m_extraData;
 

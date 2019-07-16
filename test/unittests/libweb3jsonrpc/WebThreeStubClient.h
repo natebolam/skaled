@@ -13,7 +13,6 @@ public:
         jsonrpc::clientVersion_t type = jsonrpc::JSONRPC_CLIENT_V2 );
 
     std::string test_getLogHash( const std::string& param1 ) noexcept( false );
-    std::string test_importRawBlock( const std::string& param1 ) noexcept( false );
     bool test_setChainParams( const Json::Value& param1 ) noexcept( false );
     bool test_mineBlocks( int param1 ) noexcept( false );
     bool test_modifyTimestamp( int param1 ) noexcept( false );
@@ -105,7 +104,6 @@ public:
     bool admin_net_connect( const std::string& param1, const std::string& param2 ) noexcept(
         false );
     Json::Value admin_net_peers( const std::string& param1 ) noexcept( false );
-    Json::Value admin_eth_blockQueueStatus( const std::string& param1 ) noexcept( false );
     Json::Value admin_net_nodeInfo( const std::string& param1 ) noexcept( false );
     bool admin_eth_exit( const std::string& param1 ) noexcept( false );
     bool admin_eth_setAskPrice( const std::string& param1, const std::string& param2 ) noexcept(
@@ -118,8 +116,6 @@ public:
     bool admin_eth_setMining( bool param1, const std::string& param2 ) noexcept( false );
     Json::Value admin_eth_findBlock(
         const std::string& param1, const std::string& param2 ) noexcept( false );
-    std::string admin_eth_blockQueueFirstUnknown( const std::string& param1 ) noexcept( false );
-    bool admin_eth_blockQueueRetryUnknown( const std::string& param1 ) noexcept( false );
     Json::Value admin_eth_allAccounts( const std::string& param1 ) noexcept( false );
     Json::Value admin_eth_newAccount(
         const Json::Value& param1, const std::string& param2 ) noexcept( false );

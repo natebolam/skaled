@@ -838,31 +838,27 @@ int main( int argc, char** argv ) try {
                 if ( block_no <= client->number() )
                     continue;
 
-                switch ( client->queueBlock( block, safeImport ) ) {
-                case ImportResult::Success:
-                    good++;
-                    break;
-                case ImportResult::AlreadyKnown:
-                    alreadyHave++;
-                    break;
-                case ImportResult::UnknownParent:
-                    unknownParent++;
-                    break;
-                case ImportResult::FutureTimeUnknown:
-                    unknownParent++;
-                    futureTime++;
-                    break;
-                case ImportResult::FutureTimeKnown:
-                    futureTime++;
-                    break;
-                default:
-                    bad++;
-                    break;
-                }
-
-                // sync chain with queue
-                tuple< ImportRoute, bool, unsigned > r = client->syncQueue( 10 );
-                imported += get< 2 >( r );
+                //                switch ( client->queueBlock( block, safeImport ) ) {
+                //                case ImportResult::Success:
+                //                    good++;
+                //                    break;
+                //                case ImportResult::AlreadyKnown:
+                //                    alreadyHave++;
+                //                    break;
+                //                case ImportResult::UnknownParent:
+                //                    unknownParent++;
+                //                    break;
+                //                case ImportResult::FutureTimeUnknown:
+                //                    unknownParent++;
+                //                    futureTime++;
+                //                    break;
+                //                case ImportResult::FutureTimeKnown:
+                //                    futureTime++;
+                //                    break;
+                //                default:
+                //                    bad++;
+                //                    break;
+                //                }
 
                 double e =
                     chrono::duration_cast< chrono::milliseconds >( chrono::steady_clock::now() - t )
@@ -891,7 +887,6 @@ int main( int argc, char** argv ) try {
                     MICROPROFILE_SCOPEI( "main", "sleep 1 sec", MP_DIMGREY );
                     this_thread::sleep_for( chrono::seconds( 1 ) );
                 }
-                tie( ignore, moreToImport, ignore ) = client->syncQueue( 100000 );
             }
             double e =
                 chrono::duration_cast< chrono::milliseconds >( chrono::steady_clock::now() - t )

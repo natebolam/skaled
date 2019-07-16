@@ -500,31 +500,6 @@ bool TestBlockChain::addBlock( TestBlock const& _block ) {
     return false;
 }
 
-vector< TestBlock > TestBlockChain::syncUncles( vector< TestBlock > const& uncles ) {
-    vector< TestBlock > validUncles;
-    if ( uncles.size() == 0 )
-        return validUncles;
-
-    BlockQueue uncleBlockQueue;
-    BlockChain& blockchain = *m_blockChain.get();
-    uncleBlockQueue.setChain( blockchain );
-
-    for ( size_t i = 0; i < uncles.size(); i++ ) {
-        try {
-            uncleBlockQueue.import( &uncles.at( i ).bytes(), false );
-            std::this_thread::sleep_for( std::chrono::seconds( 1 ) );  // wait until block is
-                                                                       // verified
-            validUncles.push_back( uncles.at( i ) );
-        } catch ( ... ) {
-            cnote << "error in importing uncle! This produces an invalid block (May be by purpose "
-                     "for testing).";
-        }
-    }
-
-    blockchain.sync( uncleBlockQueue, m_genesisBlock.mutableState(), ( unsigned ) 4 );
-    return validUncles;
-}
-
 TestTransaction TestTransaction::defaultTransaction(
     u256 const& _nonce, u256 const& _gasPrice, u256 const& _gasLimit, bytes const& _data ) {
     json_spirit::mObject txObj;

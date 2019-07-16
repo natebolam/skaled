@@ -60,10 +60,12 @@ public:
     TransactionQueue( Limits const& _l ) : TransactionQueue( _l.current, _l.future ) {}
     ~TransactionQueue();
     void HandleDestruction();
+
     /// Add transaction to the queue to be verified and imported.
     /// @param _data RLP encoded transaction data.
     /// @param _nodeId Optional network identified of a node transaction comes from.
-    void enqueue( RLP const& _data, h512 const& _nodeId );
+    // void enqueue( RLP const& _data, h512 const& _nodeId ); // SKALE as we don't have tx verifier
+    // threads - we won't check tx import
 
     /// Verify and add transaction to the queue synchronously.
     /// @param _tx RLP encoded transaction data.

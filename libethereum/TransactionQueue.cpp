@@ -392,24 +392,25 @@ void TransactionQueue::clear() {
     m_futureSize = 0;
 }
 
-void TransactionQueue::enqueue( RLP const& _data, h512 const& _nodeId ) {
-    bool queued = false;
-    {
-        Guard l( x_queue );
-        unsigned itemCount = _data.itemCount();
-        for ( unsigned i = 0; i < itemCount; ++i ) {
-            if ( m_unverified.size() >= c_maxVerificationQueueSize ) {
-                LOG( m_logger ) << "Transaction verification queue is full. Dropping "
-                                << itemCount - i << " transactions";
-                break;
-            }
-            m_unverified.emplace_back( UnverifiedTransaction( _data[i].data(), _nodeId ) );
-            queued = true;
-        }
-    }
-    if ( queued )
-        m_queueReady.notify_all();
-}
+// SKALE as we don't have tx verifier threads - we won't check tx import
+// void TransactionQueue::enqueue( RLP const& _data, h512 const& _nodeId ) {
+//    bool queued = false;
+//    {
+//        Guard l( x_queue );
+//        unsigned itemCount = _data.itemCount();
+//        for ( unsigned i = 0; i < itemCount; ++i ) {
+//            if ( m_unverified.size() >= c_maxVerificationQueueSize ) {
+//                LOG( m_logger ) << "Transaction verification queue is full. Dropping "
+//                                << itemCount - i << " transactions";
+//                break;
+//            }
+//            m_unverified.emplace_back( UnverifiedTransaction( _data[i].data(), _nodeId ) );
+//            queued = true;
+//        }
+//    }
+//    if ( queued )
+//        m_queueReady.notify_all();
+//}
 
 void TransactionQueue::verifierBody() {
     while ( !m_aborting ) {

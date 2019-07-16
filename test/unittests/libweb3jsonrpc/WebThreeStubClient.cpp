@@ -15,17 +15,6 @@ std::string WebThreeStubClient::test_getLogHash( const std::string& param1 ) {
             jsonrpc::Errors::ERROR_CLIENT_INVALID_RESPONSE, result.toStyledString() );
 }
 
-std::string WebThreeStubClient::test_importRawBlock( const std::string& param1 ) {
-    Json::Value p;
-    p.append( param1 );
-    Json::Value result = this->CallMethod( "test_importRawBlock", p );
-    if ( result.isString() )
-        return result.asString();
-    else
-        throw jsonrpc::JsonRpcException(
-            jsonrpc::Errors::ERROR_CLIENT_INVALID_RESPONSE, result.toStyledString() );
-}
-
 bool WebThreeStubClient::test_setChainParams( const Json::Value& param1 ) {
     Json::Value p;
     p.append( param1 );
@@ -907,17 +896,6 @@ Json::Value WebThreeStubClient::admin_net_peers( const std::string& param1 ) {
             jsonrpc::Errors::ERROR_CLIENT_INVALID_RESPONSE, result.toStyledString() );
 }
 
-Json::Value WebThreeStubClient::admin_eth_blockQueueStatus( const std::string& param1 ) {
-    Json::Value p;
-    p.append( param1 );
-    Json::Value result = this->CallMethod( "admin_eth_blockQueueStatus", p );
-    if ( result.isObject() )
-        return result;
-    else
-        throw jsonrpc::JsonRpcException(
-            jsonrpc::Errors::ERROR_CLIENT_INVALID_RESPONSE, result.toStyledString() );
-}
-
 Json::Value WebThreeStubClient::admin_net_nodeInfo( const std::string& param1 ) {
     Json::Value p;
     p.append( param1 );
@@ -1011,28 +989,6 @@ Json::Value WebThreeStubClient::admin_eth_findBlock(
     Json::Value result = this->CallMethod( "admin_eth_findBlock", p );
     if ( result.isObject() )
         return result;
-    else
-        throw jsonrpc::JsonRpcException(
-            jsonrpc::Errors::ERROR_CLIENT_INVALID_RESPONSE, result.toStyledString() );
-}
-
-std::string WebThreeStubClient::admin_eth_blockQueueFirstUnknown( const std::string& param1 ) {
-    Json::Value p;
-    p.append( param1 );
-    Json::Value result = this->CallMethod( "admin_eth_blockQueueFirstUnknown", p );
-    if ( result.isString() )
-        return result.asString();
-    else
-        throw jsonrpc::JsonRpcException(
-            jsonrpc::Errors::ERROR_CLIENT_INVALID_RESPONSE, result.toStyledString() );
-}
-
-bool WebThreeStubClient::admin_eth_blockQueueRetryUnknown( const std::string& param1 ) {
-    Json::Value p;
-    p.append( param1 );
-    Json::Value result = this->CallMethod( "admin_eth_blockQueueRetryUnknown", p );
-    if ( result.isBool() )
-        return result.asBool();
     else
         throw jsonrpc::JsonRpcException(
             jsonrpc::Errors::ERROR_CLIENT_INVALID_RESPONSE, result.toStyledString() );
