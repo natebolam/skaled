@@ -671,14 +671,14 @@ void Client::noteChanged( h256Hash const& _filters ) {
 }
 
 void Client::doWork( bool _doWait ) {
-    bool t = true;
+    // bool t = true;
 
     if ( m_needStateReset ) {
         resetState();
         m_needStateReset = false;
     }
 
-    t = true;
+    // t = true;
     bool isSealed = false;
     DEV_READ_GUARDED( x_working )
     isSealed = m_working.isSealed();
