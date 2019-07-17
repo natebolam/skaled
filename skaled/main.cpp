@@ -198,7 +198,7 @@ int main( int argc, char** argv ) try {
 
     /// File name for import/export.
     string filename;
-    bool safeImport = false;
+    // bool safeImport = false;
 
     /// Hashes/numbers for export range.
     string exportFrom = "1";
@@ -801,11 +801,11 @@ int main( int argc, char** argv ) try {
 
             ifstream fin( filename, std::ifstream::binary );
             istream& in = ( filename.empty() || filename == "--" ) ? cin : fin;
-            unsigned alreadyHave = 0;
-            unsigned good = 0;
-            unsigned futureTime = 0;
-            unsigned unknownParent = 0;
-            unsigned bad = 0;
+            //            unsigned alreadyHave = 0;
+            //            unsigned good = 0;
+            //            unsigned futureTime = 0;
+            //            unsigned unknownParent = 0;
+            //            unsigned bad = 0;
             chrono::steady_clock::time_point t = chrono::steady_clock::now();
             double last = 0;
             unsigned lastImported = 0;
