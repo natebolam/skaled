@@ -524,8 +524,8 @@ int main( int argc, char** argv ) try {
         masterPassword = vm["master"].as< string >();
         masterSet = true;
     }
-    if ( vm.count( "dont-check" ) )
-        safeImport = true;
+    //    if ( vm.count( "dont-check" ) )
+    //        safeImport = true;
     if ( vm.count( "format" ) ) {
         string m = vm["format"].as< string >();
         if ( m == "binary" )
