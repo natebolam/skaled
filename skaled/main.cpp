@@ -814,18 +814,19 @@ int main( int argc, char** argv ) try {
             unsigned block_no = static_cast< unsigned int >( -1 );
             cout << "Skipping " << client->syncStatus().currentBlockNumber + 1 << " blocks.\n";
             MICROPROFILE_ENTERI( "main", "bunch 10s", MP_LIGHTGRAY );
+            auto& bc = client->bc();
             while ( in.peek() != -1 && ( !exitHandler.shouldExit() ) ) {
-                bytes block( 8 );
+                bytes blockAsBytes( 8 );
                 {
                     if ( block_no >= client->number() ) {
                         MICROPROFILE_ENTERI( "main", "in.read", -1 );
                     }
-                    in.read( reinterpret_cast< char* >( block.data() ),
-                        std::streamsize( block.size() ) );
-                    block.resize( RLP( block, RLP::LaissezFaire ).actualSize() );
-                    if ( block.size() >= 8 ) {
-                        in.read( reinterpret_cast< char* >( block.data() + 8 ),
-                            std::streamsize( block.size() ) - 8 );
+                    in.read( reinterpret_cast< char* >( blockAsBytes.data() ),
+                        std::streamsize( blockAsBytes.size() ) );
+                    blockAsBytes.resize( RLP( blockAsBytes, RLP::LaissezFaire ).actualSize() );
+                    if ( blockAsBytes.size() >= 8 ) {
+                        in.read( reinterpret_cast< char* >( blockAsBytes.data() + 8 ),
+                            std::streamsize( blockAsBytes.size() ) - 8 );
                         if ( block_no >= client->number() ) {
                             MICROPROFILE_LEAVE();
                         }
@@ -838,7 +839,7 @@ int main( int argc, char** argv ) try {
                 if ( block_no <= client->number() )
                     continue;
 
-                //                switch ( client->queueBlock( block, safeImport ) ) {
+                //                switch ( client->queueBlock( blockAsBytes, safeImport ) ) {
                 //                case ImportResult::Success:
                 //                    good++;
                 //                    break;
@@ -859,6 +860,11 @@ int main( int argc, char** argv ) try {
                 //                    bad++;
                 //                    break;
                 //                }
+                Block blk( bc );
+                bytes extraData;
+                blk.commitToSeal( bc, extraData );
+                blk.sealBlock( blockAsBytes );
+                bc.import( blk );
 
                 double e =
                     chrono::duration_cast< chrono::milliseconds >( chrono::steady_clock::now() - t )

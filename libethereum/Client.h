@@ -267,10 +267,12 @@ protected:
     void init( boost::filesystem::path const& _dbPath, boost::filesystem::path const& _snapshotPath,
         WithExisting _forceAction, u256 _networkId );
 
+public:  // l_sergiy: we need this public for low-level blockchain access
     /// InterfaceStub methods
     BlockChain& bc() override { return m_bc; }
     BlockChain const& bc() const override { return m_bc; }
 
+protected:
     /// Returns the state object for the full block (i.e. the terminal state) for index _h.
     /// Works properly with LatestBlock and PendingBlock.
     Block preSeal() const override {

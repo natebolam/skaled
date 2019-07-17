@@ -582,6 +582,13 @@ void Client::rejigSealing() {
                 sealEngine()->onSealGenerated( [=]( bytes const& _header ) {
                     LOG( m_logger )
                         << "Block sealed #" << BlockHeader( _header, HeaderData ).number();
+
+                    Block blk( bc() );
+                    bytes extraData;
+                    blk.commitToSeal( bc(), extraData );
+                    blk.sealBlock( _header );
+                    bc().import( blk );
+
                     //                    if ( this->submitSealed( _header ) )
                     //                        m_onBlockSealed( _header );
                     //                    else
