@@ -271,8 +271,10 @@ public:
      * // unlock
      * @endcode
      */
-    bool sealBlock( bytes const& _header ) { return sealBlock( &_header ); }
-    bool sealBlock( bytesConstRef _header );
+    bool sealBlock( bytes const& _header, bool bForceSeal = false ) {
+        return sealBlock( &_header, bForceSeal );
+    }
+    bool sealBlock( bytesConstRef _header, bool bForceSeal = false );
 
     /// @returns true if sealed - in this case you can no longer append transactions.
     bool isSealed() const { return !m_currentBytes.empty(); }

@@ -583,11 +583,12 @@ void Client::rejigSealing() {
                     LOG( m_logger )
                         << "Block sealed #" << BlockHeader( _header, HeaderData ).number();
 
-                    Block blk( bc() );
+                    auto& refBC = bc();
+                    Block blk( refBC );
                     bytes extraData;
-                    blk.commitToSeal( bc(), extraData );
-                    blk.sealBlock( _header );
-                    bc().import( blk );
+                    blk.commitToSeal( refBC, extraData );
+                    blk.sealBlock( _header, true );
+                    refBC.import( blk );
 
                     //                    if ( this->submitSealed( _header ) )
                     //                        m_onBlockSealed( _header );

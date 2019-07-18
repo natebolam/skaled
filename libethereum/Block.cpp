@@ -914,12 +914,12 @@ void Block::uncommitToSeal() {
     }
 }
 
-bool Block::sealBlock( bytesConstRef _header ) {
+bool Block::sealBlock( bytesConstRef _header, bool bForceSeal ) {
     if ( !m_committedToSeal )
         return false;
 
-    if ( BlockHeader( _header, HeaderData ).hash( WithoutSeal ) !=
-         m_currentBlock.hash( WithoutSeal ) )
+    if ( ( !bForceSeal ) && BlockHeader( _header, HeaderData ).hash( WithoutSeal ) !=
+                                m_currentBlock.hash( WithoutSeal ) )
         return false;
 
     // Compile block:
