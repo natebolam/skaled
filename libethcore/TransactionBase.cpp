@@ -184,8 +184,10 @@ void TransactionBase::streamRLP( RLPStream& _s, IncludeSignature _sig, bool _for
     _s << m_value << m_data;
 
     if ( _sig ) {
-        if ( !m_vrs )
+        if ( !m_vrs ) {
+            assert( false );
             BOOST_THROW_EXCEPTION( TransactionIsUnsigned() );
+        }
 
         if ( hasZeroSignature() )
             _s << m_chainId;
