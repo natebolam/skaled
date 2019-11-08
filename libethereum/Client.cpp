@@ -186,7 +186,9 @@ ImportResult Client::queueBlock( bytes const& _block, bool _isSafe ) {
 
 tuple< ImportRoute, bool, unsigned > Client::syncQueue( unsigned _max ) {
     stopWorking();
-    return bc().sync( m_bq, m_state, _max );
+    tuple< ImportRoute, bool, unsigned > ret = bc().sync( m_bq, m_state.startWrite(), _max );
+    m_state = m_state.startNew();
+    return ret;
 }
 
 void Client::onBadBlock( Exception& _ex ) const {
@@ -390,7 +392,9 @@ void Client::syncBlockQueue() {
     ImportRoute ir;
     unsigned count;
     Timer t;
-    tie( ir, m_syncBlockQueue, count ) = bc().sync( m_bq, m_state, m_syncAmount );
+    tie( ir, m_syncBlockQueue, count ) = bc().sync( m_bq, m_state.startWrite(), m_syncAmount );
+    m_state = m_state.startNew();  // HACK There was commit to state in sync() - but because of data
+                                   // races it was made const
     double elapsed = t.elapsed();
 
     if ( count ) {

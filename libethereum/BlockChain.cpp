@@ -397,7 +397,7 @@ string BlockChain::dumpDatabase() const {
 }
 
 tuple< ImportRoute, bool, unsigned > BlockChain::sync(
-    BlockQueue& _bq, State& _state, unsigned _max ) {
+    BlockQueue& _bq, const State& _state, unsigned _max ) {
     MICROPROFILE_SCOPEI( "BlockChain", "sync many blocks", MP_LIGHTGOLDENROD );
 
     //  _bq.tick(*this);
@@ -461,7 +461,7 @@ tuple< ImportRoute, bool, unsigned > BlockChain::sync(
 }
 
 pair< ImportResult, ImportRoute > BlockChain::attemptImport(
-    bytes const& _block, State& _state, bool _mustBeNew ) noexcept {
+    bytes const& _block, const State& _state, bool _mustBeNew ) noexcept {
     try {
         return make_pair( ImportResult::Success,
             import( verifyBlock( &_block, m_onBad, ImportRequirements::OutOfOrderChecks ), _state,
@@ -479,7 +479,7 @@ pair< ImportResult, ImportRoute > BlockChain::attemptImport(
     }
 }
 
-ImportRoute BlockChain::import( bytes const& _block, State& _state, bool _mustBeNew ) {
+ImportRoute BlockChain::import( bytes const& _block, const State& _state, bool _mustBeNew ) {
     // VERIFY: populates from the block and checks the block is internally coherent.
     VerifiedBlockRef const block =
         verifyBlock( &_block, m_onBad, ImportRequirements::OutOfOrderChecks );
@@ -591,7 +591,8 @@ void BlockChain::insert( VerifiedBlockRef _block, bytesConstRef _receipts, bool 
     }
 }
 
-ImportRoute BlockChain::import( VerifiedBlockRef const& _block, State& _state, bool _mustBeNew ) {
+ImportRoute BlockChain::import(
+    VerifiedBlockRef const& _block, const State& _state, bool _mustBeNew ) {
     //@tidy This is a behemoth of a method - could do to be split into a few smaller ones.
 
     MICROPROFILE_SCOPEI( "BlockChain", "import", MP_GREENYELLOW );
@@ -649,7 +650,7 @@ ImportRoute BlockChain::import( VerifiedBlockRef const& _block, State& _state, b
 
         s.cleanup();
 
-//!!!        _state.updateToLatestVersion();
+        //!!!        _state.updateToLatestVersion();
 
         totalDifficulty = pd.totalDifficulty + tdIncrease;
 

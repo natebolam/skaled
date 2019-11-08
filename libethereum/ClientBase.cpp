@@ -177,7 +177,10 @@ std::pair< u256, ExecutionResult > ClientBase::estimateGas( Address const& _from
 }
 
 ImportResult ClientBase::injectBlock( bytes const& _block ) {
-    return bc().attemptImport( _block, preSeal().mutableState() ).first;
+    skale::State& state = preSeal().mutableState();
+    ImportResult res = bc().attemptImport( _block, state.startWrite() ).first;
+    state = state.startNew();
+    return res;
 }
 
 u256 ClientBase::balanceAt( Address _a ) const {
