@@ -19,8 +19,8 @@ RUN ./SkaleDeps/build.sh
 
 RUN cmake -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE
 
-RUN mkdir -p build; cd build; cmake -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE
+RUN export CC=gcc-7;  export CXX=g++-7; cmake -H. -Bbuild -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE
 
-### RUN cd libBLS; cmake -H. -Bbuild; cmake --build build -- -j$(nproc);
+RUN export CC=gcc-7;  export CXX=g++-7; cmake --build build -- -j$(nproc);
 
 ENTRYPOINT ["/bin/bash"]

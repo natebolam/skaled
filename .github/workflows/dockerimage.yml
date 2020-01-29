@@ -1,0 +1,18 @@
+name: Build and push skaled container
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to docker
+        env:
+          GITHUB_TOKEN: ${{ secrets.DOCKER_SECRET }}
+        run: docker login -u skalelabs -p ${GITHUB_TOKEN}
+      - uses: actions/checkout@v1
+      - name: submodule update
+        run: git submodule update --init --recursive
+      - name: build
+        run: python3 scripts/docker_build.py ${GITHUB_REF##*/} Dockerfile skaled
+      - name: push
+        run: python3 scripts/docker_push.py ${GITHUB_REF##*/} Dockerfile skaled
+
